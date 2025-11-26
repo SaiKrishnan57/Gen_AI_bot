@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+
+# Environment variables (IMPORTANT)
+.env
+
+# VS Code / JetBrains
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# uv / pip
+uv.lock
+pip-log.txt
