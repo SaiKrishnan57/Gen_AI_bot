@@ -19,10 +19,9 @@ SYSTEM_PROMPT = (
 )
 
 def main():
-    print("=== Terminal Chatbot (gpt-4.1-nano) ===")
+    print("=== Streaming Terminal Chatbot (gpt-4.1-nano) ===")
     print("Type 'exit' or 'quit' to stop.\n")
 
-    # Conversation history so the model has context
     history = [
         {"role": "system", "content": SYSTEM_PROMPT},
     ]
@@ -43,17 +42,29 @@ def main():
 
         history.append({"role": "user", "content": user_input})
 
-        # Call OpenAI Responses API with the whole history :contentReference[oaicite:1]{index=1}
-        response = client.responses.create(
+        # --- STREAMING PART ---
+        # stream=True gives us an event iterator with chunks of text :contentReference[oaicite:0]{index=0}
+        stream = client.responses.create(
             model=MODEL,
             input=history,
+            stream=True,
         )
 
-        bot_reply = response.output_text  # convenience property in SDK :contentReference[oaicite:2]{index=2}
-        print(f"Bot: {bot_reply}\n")
+        print("Bot: ", end="", flush=True)
+        full_reply = ""
 
-        # Add assistant message back into history for future context
-        history.append({"role": "assistant", "content": bot_reply})
+        for event in stream:
+            # Only care about the text chunks
+            if event.type == "response.output_text.delta":
+                delta = event.delta or ""
+                full_reply += delta
+                print(delta, end="", flush=True)
+
+        print("\n")  # newline after the streamed answer
+
+        # Save reply back into history so the model has context
+        if full_reply.strip():
+            history.append({"role": "assistant", "content": full_reply})
 
 
 if __name__ == "__main__":
